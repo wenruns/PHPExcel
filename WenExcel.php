@@ -10,6 +10,8 @@
 namespace App\Admin\Services\phpExcel;
 
 
+use phpDocumentor\Reflection\Types\Self_;
+
 class WenExcel
 {
     static protected $phpExcelObj = null; // phpExcel对象
@@ -60,6 +62,18 @@ class WenExcel
 
     static protected $cacheSettings = [];
 
+    static protected $cacheEnable = true;
+
+    const CACHE_METHODS = [
+        'memory' => \PHPExcel_CachedObjectStorageFactory::cache_in_memory,
+        'serialized' => \PHPExcel_CachedObjectStorageFactory::cache_in_memory_serialized,
+        'gzip' => \PHPExcel_CachedObjectStorageFactory::cache_in_memory_gzip,
+        'discISAM' => \PHPExcel_CachedObjectStorageFactory::cache_to_discISAM,
+        'phpTemp' => \PHPExcel_CachedObjectStorageFactory::cache_to_phpTemp,
+        'apc' => \PHPExcel_CachedObjectStorageFactory::cache_to_apc,
+        'memcache' => \PHPExcel_CachedObjectStorageFactory::cache_to_memcache,
+    ];
+
     // 列
     static protected $letter = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T', 'U','V','W','X','Y','Z',
         'AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM','AN','AO','AP','AQ','AR','AS','AT','AU','AV','AW','AX','AY','AZ'];
@@ -88,12 +102,13 @@ class WenExcel
     public static function export($type = 'xls')
     {
         set_time_limit(0);
-        header('Content-Type: application/vnd.ms-excel');
+        header('Content-Type: application/vnd.ms-excel;charset=utf-8');
 //        header('Content-Type: application/vnd.ms-excel');
         header('Content-Disposition: attachment;filename="'.self::$filename.'.'.$type.'"');
         header('Cache-Control: max-age=0');
-//        application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-        \PHPExcel_Settings::setCacheStorageMethod(self::$cacheMethod, self::$cacheSettings);
+        if (self::$cacheEnable) {
+            \PHPExcel_Settings::setCacheStorageMethod(self::$cacheMethod, self::$cacheSettings);
+        }
         self::setData();
         $objWriter = \PHPExcel_IOFactory::createWriter(self::getPhpExcelObj(), 'Excel5');
         $objWriter->save('php://output');
@@ -375,6 +390,9 @@ class WenExcel
         self::$cellWidth = isset($configs['cellWidth']) ? $configs['cellWidth'] : 25;
         self::$page = 0;
         self::$line = 1;
+        self::$cacheEnable = isset($configs['cache']['enabled']) ? $configs['cache']['enabled'] : true;
+        self::$cacheSettings = isset($configs['cache']['settings']) ? $configs['cache']['settings'] : [];
+        self::$cacheMethod = isset($configs['cache']['driver']) && isset(self::CACHE_METHODS[$configs['cache']['driver']]) ? self::CACHE_METHODS[$configs['cache']['driver']] :
         self::$phpExcelObj = new \PHPExcel();
     }
 

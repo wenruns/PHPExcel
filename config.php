@@ -19,5 +19,10 @@ return [
     'cellWidth' => [
         'A' => 12
     ],
+    'cache' => [
+        'enabled' => true,
+        'driver' => 'memory',
+        'settings' => [],
+    ],
 //    'text-align' => 'center'
 ];
